@@ -1,0 +1,137 @@
+generator client {
+  provider      = "prisma-client-js"
+  // So `npm run build` on macOS still runs on Hostinger / typical Linux (glibc + OpenSSL 3).
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+// Must match DATABASE_URL: use mysql://… for XAMPP / Hostinger MySQL.
+// If you use PostgreSQL instead, set provider = "postgresql" and a postgres:// URL.
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum PostApprovalStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PostCoverImageKind {
+  NONE
+  EXTERNAL
+  UPLOAD
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  name            String?
+  role            Role      @default(USER)
+  blocked         Boolean   @default(false)
+  blockedReason   String?
+  /** When false, user may read/comment but cannot submit stories until an admin approves. */
+  writerApproved  Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  comments     Comment[]
+  posts        Post[]    @relation("AuthorPosts")
+  impersonationTokens ImpersonationToken[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?  @db.Text
+  sortOrder   Int      @default(0)
+  posts       Post[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SiteSettings {
+  id                          String   @id @default("site")
+  dailyPostLimitEnabled       Boolean  @default(false)
+  dailyPostLimitCount         Int      @default(3)
+  paymentAdsEnabled           Boolean  @default(false)
+  paymentSubscriptionsEnabled Boolean  @default(false)
+  /** Offer Stripe at checkout (keys in .env). */
+  paymentStripeEnabled        Boolean  @default(false)
+  /** Offer Razorpay. */
+  paymentRazorpayEnabled        Boolean  @default(false)
+  /** Offer Google Pay / Google for Business. */
+  paymentGooglePayEnabled     Boolean  @default(false)
+  /** Offer Paytm. */
+  paymentPaytmEnabled         Boolean  @default(false)
+  /** Offer PayPhone (or similar mobile wallet). */
+  paymentPayPhoneEnabled      Boolean  @default(false)
+  /** Offer PayPal. */
+  paymentPayPalEnabled        Boolean  @default(false)
+  /** Admin-editable default page title and Open Graph title (empty = use app default). */
+  promoMetaTitle              String?  @db.VarChar(200)
+  /** Admin-editable meta description and OG/Twitter description. */
+  promoMetaDescription        String?  @db.Text
+  /** Comma-separated keywords for the keywords meta tag. */
+  promoKeywords               String?  @db.VarChar(500)
+  /** Full URL or site-relative path (e.g. /brand/never-quit-punjabi-logo.png) for OG/Twitter image. */
+  promoOgImageUrl             String?  @db.VarChar(2048)
+  /** Public Facebook page/profile URL (https). */
+  socialFacebookUrl           String?  @db.VarChar(500)
+  /** Instagram profile URL (https). */
+  socialInstagramUrl          String?  @db.VarChar(500)
+  /** WhatsApp chat link, e.g. https://wa.me/1234567890 */
+  socialWhatsAppUrl           String?  @db.VarChar(500)
+  updatedAt                   DateTime @updatedAt
+}
+
+model ImpersonationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id              String             @id @default(cuid())
+  slug            String             @unique
+  title           String
+  excerpt         String?            @db.Text
+  content         String             @db.LongText
+  coverImageUrl    String?             @db.VarChar(2048)
+  coverImageKind   PostCoverImageKind @default(NONE)
+  youtubeUrl       String?             @db.VarChar(512)
+  approvalStatus  PostApprovalStatus @default(DRAFT)
+  authorId        String
+  author          User               @relation("AuthorPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  categoryId      String?
+  category        Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt       DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  comments        Comment[]
+
+  @@index([approvalStatus, createdAt])
+  @@index([categoryId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String   @db.Text
+  approved  Boolean  @default(true)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([postId, approved])
+}
