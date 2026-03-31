@@ -53,6 +53,17 @@ export async function SiteFooter() {
             instagramUrl={socialInstagramUrl}
             whatsAppUrl={socialWhatsAppUrl}
           />
+          <p className="text-xs text-ink-500">
+            Developed by{" "}
+            <a
+              href="https://vercel.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-ink-400 hover:text-ink-200"
+            >
+              Vercel
+            </a>
+          </p>
         </div>
       </div>
     </footer>

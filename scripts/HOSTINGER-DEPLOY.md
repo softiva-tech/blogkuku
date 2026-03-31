@@ -13,7 +13,10 @@ This site is a **Node.js** application, not static PHP/HTML. You need **Hostinge
 
 2. **Environment**  
    In the same directory as `server.js`, create `.env` (see `.env.example` in `dist/`):
-   - `DATABASE_URL` — MySQL connection string from Hostinger (phpMyAdmin / Databases).
+   - `DATABASE_URL` — **Use the MySQL user from Hostinger’s control panel**, not `root` from your local XAMPP. In **hPanel → Databases → MySQL Databases**, create a database and user; the panel shows host (often `localhost` or a hostname like `mysql.hostinger.com`), database name, username, and password. Example:
+     `mysql://PANEL_USER:PANEL_PASSWORD@127.0.0.1:3306/PANEL_DB_NAME`  
+     Special characters in the password must be **URL-encoded** (e.g. `@` → `%40`). Wrong user/password is the most common deploy/build failure.
+   - **Build / CI:** Set this same `DATABASE_URL` in the host’s “Environment variables” for the **build** step if the platform runs `next build` there. If the DB is only available at runtime, you still must use valid credentials whenever Prisma runs during build, or the build may fail connecting as `root`.
    - `AUTH_SECRET` — long random string (`openssl rand -base64 32`).
    - `NEXTAUTH_URL` — your public site URL, e.g. `https://yourdomain.com` (no trailing slash).
 

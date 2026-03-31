@@ -14,26 +14,44 @@ export default async function BlogIndexPage({
 }) {
   const { category: categorySlug } = await searchParams;
 
-  const category = categorySlug
-    ? await prisma.category.findUnique({ where: { slug: categorySlug } })
-    : null;
+  let category: { id: string } | null = null;
+  let posts: Awaited<
+    ReturnType<
+      typeof prisma.post.findMany<{
+        include: {
+          author: { select: { name: true; email: true } };
+          category: { select: { name: true; slug: true } };
+        };
+      }>
+    >
+  > = [];
+  let categories: Awaited<ReturnType<typeof prisma.category.findMany>> = [];
 
-  const [posts, categories] = await Promise.all([
-    prisma.post.findMany({
-      where: {
-        ...publicPostWhere,
-        ...(category
-          ? { categoryId: category.id }
-          : {}),
-      },
-      orderBy: { createdAt: "desc" },
-      include: {
-        author: { select: { name: true, email: true } },
-        category: { select: { name: true, slug: true } },
-      },
-    }),
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
-  ]);
+  try {
+    category = categorySlug
+      ? await prisma.category.findUnique({
+          where: { slug: categorySlug },
+          select: { id: true },
+        })
+      : null;
+
+    [posts, categories] = await Promise.all([
+      prisma.post.findMany({
+        where: {
+          ...publicPostWhere,
+          ...(category ? { categoryId: category.id } : {}),
+        },
+        orderBy: { createdAt: "desc" },
+        include: {
+          author: { select: { name: true, email: true } },
+          category: { select: { name: true, slug: true } },
+        },
+      }),
+      prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+    ]);
+  } catch {
+    /* DB unreachable or wrong credentials during deploy/build — render empty list */
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
