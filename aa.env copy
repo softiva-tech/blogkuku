@@ -1,0 +1,11 @@
+# XAMPP MySQL — database name: blogkuku (create in phpMyAdmin if needed)
+# Default XAMPP user is root with no password. If you set a password, use:
+# mysql://root:YOUR_PASSWORD@127.0.0.1:3306/blogkuku
+DATABASE_URL="mysql://root:@127.0.0.1:3306/blogkuku"
+
+AUTH_SECRET="lG/jDZ7ckbCofXDo+UISfKLbLZtvXjDI9jezjpdeCnQ="
+
+ADMIN_EMAIL="admin@demo.com"
+ADMIN_PASSWORD="admin123"
+
+NEXTAUTH_URL="http://localhost:3000"
