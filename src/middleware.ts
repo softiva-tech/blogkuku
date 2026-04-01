@@ -1,8 +1,8 @@
-import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import type { NextFetchEvent, NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-const withAuth = auth((req) => {
+export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
   if (
@@ -17,35 +17,30 @@ const withAuth = auth((req) => {
     return NextResponse.next();
   }
 
-  if (req.auth?.user?.blocked) {
-    return NextResponse.redirect(new URL("/auth/blocked", req.url));
-  }
-
-  if (!path.startsWith("/admin")) {
-    return NextResponse.next();
-  }
-
-  const role = req.auth?.user?.role;
-  if (role !== "ADMIN") {
-    const signIn = new URL("/auth/signin", req.nextUrl.origin);
-    signIn.searchParams.set("callbackUrl", path);
-    return NextResponse.redirect(signIn);
-  }
-
-  return NextResponse.next();
-});
-
-export default async function middleware(req: NextRequest, evt: NextFetchEvent) {
   try {
-    return await (
-      withAuth as unknown as (
-        r: NextRequest,
-        e: NextFetchEvent,
-      ) => Promise<Response | NextResponse>
-    )(req, evt);
+    const token = await getToken({
+      req,
+      secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+    });
+
+    if (token?.blocked) {
+      return NextResponse.redirect(new URL("/auth/blocked", req.url));
+    }
+
+    if (!path.startsWith("/admin")) {
+      return NextResponse.next();
+    }
+
+    const role = typeof token?.role === "string" ? token.role : undefined;
+    if (role !== "ADMIN") {
+      const signIn = new URL("/auth/signin", req.nextUrl.origin);
+      signIn.searchParams.set("callbackUrl", path);
+      return NextResponse.redirect(signIn);
+    }
+
+    return NextResponse.next();
   } catch (err) {
-    console.error("[middleware] auth failed:", err);
-    const path = req.nextUrl.pathname;
+    console.error("[middleware] token check failed:", err);
     if (path.startsWith("/admin")) {
       const signIn = new URL("/auth/signin", req.url);
       signIn.searchParams.set("callbackUrl", path);

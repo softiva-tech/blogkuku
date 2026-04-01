@@ -72,9 +72,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        const id = user.id?.toString();
-        token.id = id;
-        token.sub = id;
+        const id = user.id?.toString() ?? token.sub ?? token.id;
+        if (id) {
+          token.id = id;
+          token.sub = id;
+        }
         token.role = user.role;
         token.blocked = Boolean(
           (user as { blocked?: boolean }).blocked,
