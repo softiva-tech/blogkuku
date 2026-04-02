@@ -27,14 +27,37 @@ This site is a **Node.js** application, not static PHP/HTML. You need **Hostinge
    From the folder that contains `server.js`:
 
    ```bash
-   node server.js
+   ./start.sh
    ```
 
-   Set `PORT` if your host expects a specific port (e.g. `PORT=3000 node server.js`).  
+   The bundled `start.sh` sets **`HOSTNAME=0.0.0.0`** (see **503** note below) and loads **`.env`** with Node’s `--env-file` (Node **20+**).  
+   If you must call Node directly:
+
+   ```bash
+   HOSTNAME=0.0.0.0 PORT=3000 node --env-file=.env server.js
+   ```
+
+   **`node server.js` alone does not read `.env`** — variables must be in the process environment or use `--env-file`.
+
+   Set **`PORT`** to the same port your reverse proxy uses (often `3000`).  
    Use **PM2**, **Supervisor**, or Hostinger’s process manager to keep it running and restart on reboot.
 
 5. **Reverse proxy**  
-   Point your domain’s HTTPS virtual host to `http://127.0.0.1:PORT` (the port `server.js` listens on).
+   Point your domain’s HTTPS virtual host to `http://127.0.0.1:PORT` (the port the app listens on). The **`PORT`** in `.env` (or the shell) must match what the proxy targets.
+
+### If you see **503 Service Unavailable**
+
+Usually the proxy cannot reach the Node process, or Node exited.
+
+| Check | What to do |
+|--------|------------|
+| Process running | In SSH: `ps aux \| grep node` or your panel’s app status. Restart with `./start.sh` or PM2. |
+| Crash on boot | Run `./start.sh` in SSH and read the error (missing `DATABASE_URL`, wrong Node version, etc.). |
+| **`HOSTNAME` env** | On Linux, `HOSTNAME` is often the server hostname. Next.js binds to that, so **127.0.0.1** proxy fails. Use **`./start.sh`** or `HOSTNAME=0.0.0.0` (see step 4). |
+| **Port mismatch** | Proxy must forward to the same **`PORT`** your app uses (default **3000**). |
+| **`.env` ignored** | Use `./start.sh` or `node --env-file=.env server.js`. A `.env` file alone is not loaded by `node server.js`. |
+| **Git deploy “start command”** | Must run **`node server.js`** or **`./start.sh`** from the directory that contains them, with env vars set in the panel. **`npm start`** from repo root only works if your `package.json` start script matches that layout. |
+| **Memory** | Very small VPS may OOM-kill Node; check `dmesg` / host metrics. |
 
 6. **Uploads**  
    Post cover images are stored under `public/uploads/`. Ensure that directory exists and is **writable** by the Node process.
