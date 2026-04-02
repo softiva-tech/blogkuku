@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getSessionSafe } from "@/lib/get-session";
 import { getSiteSettings } from "@/lib/site-settings";
-import { getBaseUrl } from "@/lib/base-url";
+import { getBaseUrl, getMetadataBaseUrl } from "@/lib/base-url";
 import { BRAND_LOGO_PATH } from "@/lib/brand";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE_DEFAULT } from "@/lib/site";
 import "./globals.css";
@@ -30,65 +30,74 @@ function absoluteOgImageUrl(base: string, pathOrUrl: string): string {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const base = getBaseUrl();
-  let promoMetaTitle: string | null = null;
-  let promoMetaDescription: string | null = null;
-  let promoKeywords: string | null = null;
-  let promoOgImageUrl: string | null = null;
   try {
-    const s = await getSiteSettings();
-    promoMetaTitle = s.promoMetaTitle;
-    promoMetaDescription = s.promoMetaDescription;
-    promoKeywords = s.promoKeywords;
-    promoOgImageUrl = s.promoOgImageUrl;
-  } catch {
-    /* DB unavailable — fall back to static defaults */
+    const base = getBaseUrl();
+    let promoMetaTitle: string | null = null;
+    let promoMetaDescription: string | null = null;
+    let promoKeywords: string | null = null;
+    let promoOgImageUrl: string | null = null;
+    try {
+      const s = await getSiteSettings();
+      promoMetaTitle = s.promoMetaTitle;
+      promoMetaDescription = s.promoMetaDescription;
+      promoKeywords = s.promoKeywords;
+      promoOgImageUrl = s.promoOgImageUrl;
+    } catch {
+      /* DB unavailable — fall back to static defaults */
+    }
+
+    const titleDefault = promoMetaTitle?.trim() || SITE_TITLE_DEFAULT;
+    const description = promoMetaDescription?.trim() || SITE_DESCRIPTION;
+    const keywords = promoKeywords
+      ?.split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+    const ogImagePath = promoOgImageUrl?.trim() || BRAND_LOGO_PATH;
+    const ogImageAbsolute = absoluteOgImageUrl(base, ogImagePath);
+
+    return {
+      metadataBase: getMetadataBaseUrl(),
+      title: {
+        default: titleDefault,
+        template: `%s · ${SITE_NAME}`,
+      },
+      description,
+      ...(keywords?.length ? { keywords } : {}),
+      icons: {
+        icon: [{ url: BRAND_LOGO_PATH, type: "image/png" }],
+        apple: [{ url: BRAND_LOGO_PATH, type: "image/png" }],
+      },
+      openGraph: {
+        type: "website",
+        locale: "en_US",
+        siteName: SITE_NAME,
+        title: titleDefault,
+        description,
+        images: [
+          {
+            url: ogImageAbsolute,
+            width: 512,
+            height: 512,
+            alt: SITE_NAME,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: titleDefault,
+        description,
+        images: [ogImageAbsolute],
+      },
+      robots: { index: true, follow: true },
+    };
+  } catch (e) {
+    console.error("[layout] generateMetadata failed:", e);
+    return {
+      metadataBase: getMetadataBaseUrl(),
+      title: { default: SITE_TITLE_DEFAULT, template: `%s · ${SITE_NAME}` },
+      description: SITE_DESCRIPTION,
+    };
   }
-
-  const titleDefault = promoMetaTitle?.trim() || SITE_TITLE_DEFAULT;
-  const description = promoMetaDescription?.trim() || SITE_DESCRIPTION;
-  const keywords = promoKeywords
-    ?.split(",")
-    .map((k) => k.trim())
-    .filter(Boolean);
-  const ogImagePath = promoOgImageUrl?.trim() || BRAND_LOGO_PATH;
-  const ogImageAbsolute = absoluteOgImageUrl(base, ogImagePath);
-
-  return {
-    metadataBase: new URL(base),
-    title: {
-      default: titleDefault,
-      template: `%s · ${SITE_NAME}`,
-    },
-    description,
-    ...(keywords?.length ? { keywords } : {}),
-    icons: {
-      icon: [{ url: BRAND_LOGO_PATH, type: "image/png" }],
-      apple: [{ url: BRAND_LOGO_PATH, type: "image/png" }],
-    },
-    openGraph: {
-      type: "website",
-      locale: "en_US",
-      siteName: SITE_NAME,
-      title: titleDefault,
-      description,
-      images: [
-        {
-          url: ogImageAbsolute,
-          width: 512,
-          height: 512,
-          alt: SITE_NAME,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: titleDefault,
-      description,
-      images: [ogImageAbsolute],
-    },
-    robots: { index: true, follow: true },
-  };
 }
 
 export default async function RootLayout({

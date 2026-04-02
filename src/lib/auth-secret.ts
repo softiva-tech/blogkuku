@@ -28,7 +28,9 @@ export function getAuthSecret(): string {
     return BUILD_PLACEHOLDER_SECRET;
   }
 
-  throw new Error(
-    "AUTH_SECRET must be at least 32 characters in production. Generate one with: openssl rand -base64 32",
+  // Production runtime: throwing here runs before `getSessionSafe()` can catch and breaks every page.
+  console.error(
+    "[auth] AUTH_SECRET (or NEXTAUTH_SECRET) is missing or shorter than 32 characters. Set one with: openssl rand -base64 32 — using a temporary secret so the site can render (fix this in hPanel / .env immediately).",
   );
+  return BUILD_PLACEHOLDER_SECRET;
 }
