@@ -5,7 +5,7 @@ import {
   PostEditorForm,
   type PostEditorCategory,
 } from "@/components/post-editor-form";
-import { PostApprovalStatus } from "@prisma/client";
+import type { PostApprovalStatus } from "@/lib/post-approval-status";
 
 type Defaults = {
   title: string;

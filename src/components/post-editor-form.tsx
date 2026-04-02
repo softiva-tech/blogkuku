@@ -1,6 +1,9 @@
 "use client";
 
-import { PostApprovalStatus } from "@prisma/client";
+import {
+  PostApprovalStatus,
+  type PostApprovalStatus as PostApprovalStatusType,
+} from "@/lib/post-approval-status";
 import { PostEditorSubmitButton } from "@/components/post-editor-submit-button";
 
 export type PostEditorCategory = { id: string; name: string; slug: string };
@@ -16,14 +19,14 @@ type PostEditorFormProps = {
     coverImageUrl?: string | null;
     youtubeUrl?: string | null;
     categoryId?: string | null;
-    approvalStatus?: PostApprovalStatus;
+    approvalStatus?: PostApprovalStatusType;
   };
   submitLabel: string;
   variant: "admin" | "submit";
   categories: PostEditorCategory[];
 };
 
-const statusLabels: Record<PostApprovalStatus, string> = {
+const statusLabels: Record<PostApprovalStatusType, string> = {
   [PostApprovalStatus.DRAFT]: "Draft",
   [PostApprovalStatus.PENDING]: "Pending approval",
   [PostApprovalStatus.APPROVED]: "Approved (live)",
@@ -174,7 +177,7 @@ export function PostEditorForm({
             }
             className="mt-1 w-full rounded-lg border border-ink-700 bg-ink-900/50 px-3 py-2 text-ink-100 focus:border-ember-500/60 focus:outline-none focus:ring-1 focus:ring-ember-500/30"
           >
-            {(Object.keys(statusLabels) as PostApprovalStatus[]).map((k) => (
+            {(Object.keys(statusLabels) as PostApprovalStatusType[]).map((k) => (
               <option key={k} value={k}>
                 {statusLabels[k]}
               </option>
