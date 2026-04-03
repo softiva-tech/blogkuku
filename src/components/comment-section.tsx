@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { addComment } from "@/lib/actions";
 import { CommentForm } from "@/components/comment-form";
+import type { Prisma } from "@prisma/client";
 
 type CommentSectionProps = {
   postId: string;
@@ -9,11 +10,20 @@ type CommentSectionProps = {
 
 export async function CommentSection({ postId }: CommentSectionProps) {
   const session = await auth();
-  const comments = await prisma.comment.findMany({
-    where: { postId, approved: true },
-    orderBy: { createdAt: "asc" },
-    include: { user: { select: { name: true, email: true } } },
-  });
+  type CommentWithUser = Prisma.CommentGetPayload<{
+    include: { user: { select: { name: true; email: true } } };
+  }>;
+  let comments: CommentWithUser[] = [];
+  try {
+    comments = await prisma.comment.findMany({
+      where: { postId, approved: true },
+      orderBy: { createdAt: "asc" },
+      include: { user: { select: { name: true, email: true } } },
+    });
+  } catch (e) {
+    // During deploys, DB creds/availability can be temporarily wrong — don't crash RSC.
+    console.error("[comments] load failed:", e);
+  }
 
   return (
     <section className="mt-12 border-t border-ink-800 pt-10">

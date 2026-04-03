@@ -14,14 +14,23 @@ export default async function SubmitPage() {
     redirect("/admin/posts/new");
   }
 
-  const [categories, settings, dbUser] = await Promise.all([
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
-    getSiteSettings(),
-    prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { writerApproved: true },
-    }),
-  ]);
+  let categories: Awaited<ReturnType<typeof prisma.category.findMany>> = [];
+  let dbUser: { writerApproved: boolean } | null = null;
+  try {
+    const [c, user] = await Promise.all([
+      prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { writerApproved: true },
+      }),
+    ]);
+    categories = c;
+    dbUser = user;
+  } catch (e) {
+    console.error("[submit] DB load failed:", e);
+  }
+
+  const settings = await getSiteSettings();
 
   if (!dbUser?.writerApproved) {
     return (

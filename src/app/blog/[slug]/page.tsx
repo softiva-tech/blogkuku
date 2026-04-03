@@ -8,15 +8,21 @@ import { publicPostWhere } from "@/lib/post-live";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getYouTubeEmbedUrl } from "@/lib/youtube";
 import type { Metadata } from "next";
+import type { Prisma } from "@prisma/client";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await prisma.post.findFirst({
-    where: { slug, ...publicPostWhere },
-  });
-  if (!post) return { title: "Not found" };
+  let post: Prisma.PostGetPayload<{}> | null = null;
+  try {
+    post = await prisma.post.findFirst({
+      where: { slug, ...publicPostWhere },
+    });
+  } catch (e) {
+    console.error("[blog:slug] generateMetadata failed:", e);
+  }
+  if (!post) return { title: "Blog" };
   return {
     title: post.title,
     description: post.excerpt ?? post.title,
@@ -25,13 +31,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = await prisma.post.findFirst({
-    where: { slug, ...publicPostWhere },
+  let post: Prisma.PostGetPayload<{
     include: {
-      author: { select: { name: true, email: true } },
-      category: { select: { name: true, slug: true } },
-    },
-  });
+      author: { select: { name: true; email: true } };
+      category: { select: { name: true; slug: true } };
+    };
+  }> | null = null;
+  try {
+    post = await prisma.post.findFirst({
+      where: { slug, ...publicPostWhere },
+      include: {
+        author: { select: { name: true, email: true } },
+        category: { select: { name: true, slug: true } },
+      },
+    });
+  } catch (e) {
+    console.error("[blog:slug] page render failed:", e);
+    notFound();
+  }
   if (!post) notFound();
 
   const base = getBaseUrl();
