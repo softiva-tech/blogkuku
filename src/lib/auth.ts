@@ -1,7 +1,10 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { getAuthSecret } from "@/lib/auth-secret";
+import { sanitizeAuthPublicUrlEnv } from "@/lib/sanitize-auth-env";
 import { prisma } from "@/lib/prisma";
+
+sanitizeAuthPublicUrlEnv();
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: getAuthSecret(),
