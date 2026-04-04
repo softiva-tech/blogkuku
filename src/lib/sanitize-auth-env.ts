@@ -4,6 +4,11 @@
  * throws `TypeError: Invalid URL` and breaks `/api/auth/*`.
  *
  * If invalid, we clear the var so `trustHost` + request headers can build the URL.
+ *
+ * **Important:** `next-auth` reads `AUTH_URL` / `NEXTAUTH_URL` and, if the pathname is
+ * not `/`, sets `config.basePath` to that path (see `next-auth/lib/env.js`). A value like
+ * `https://site.com/blog` makes basePath `/blog`, so `/api/auth/*` no longer parses →
+ * 400 "Bad request." We therefore keep **origin only** (no path).
  */
 export function sanitizeAuthPublicUrlEnv(): void {
   for (const key of ["AUTH_URL", "NEXTAUTH_URL"] as const) {
@@ -33,9 +38,12 @@ export function sanitizeAuthPublicUrlEnv(): void {
       if (!u.hostname) {
         throw new Error("no hostname");
       }
-      const path =
-        u.pathname === "/" ? "" : u.pathname.replace(/\/+$/, "");
-      process.env[key] = `${u.origin}${path}`;
+      if (u.pathname && u.pathname !== "/") {
+        console.warn(
+          `[auth] ${key} contained a path (${u.pathname}). NextAuth would mis-set basePath; using origin only: ${u.origin}`,
+        );
+      }
+      process.env[key] = u.origin;
     } catch {
       console.error(
         `[auth] Invalid ${key}="${trimmed.slice(0, 80)}${trimmed.length > 80 ? "…" : ""}" — clearing so Auth.js can use request host (trustHost).`,
