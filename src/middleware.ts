@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { getAuthSecret } from "@/lib/auth-secret";
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
@@ -18,9 +19,11 @@ export default async function middleware(req: NextRequest) {
   }
 
   try {
+    // Edge middleware often does not see the same env as `node server.js`. Raw
+    // `process.env.AUTH_SECRET` can be empty → getToken throws MissingSecret → 500.
     const token = await getToken({
       req,
-      secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+      secret: getAuthSecret(),
     });
 
     if (token?.blocked) {
