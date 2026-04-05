@@ -4,10 +4,10 @@ generator client {
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
-// Must match DATABASE_URL: use mysql://… for XAMPP / Hostinger MySQL.
-// If you use PostgreSQL instead, set provider = "postgresql" and a postgres:// URL.
+// Supabase = PostgreSQL. Use the URI from Supabase → Project Settings → Database
+// (Session mode / Transaction mode). DATABASE_URL must start with postgresql:// or postgres://
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -106,7 +106,7 @@ model Post {
   slug            String             @unique
   title           String
   excerpt         String?            @db.Text
-  content         String             @db.LongText
+  content         String             @db.Text
   coverImageUrl    String?             @db.VarChar(2048)
   coverImageKind   PostCoverImageKind @default(NONE)
   youtubeUrl       String?             @db.VarChar(512)

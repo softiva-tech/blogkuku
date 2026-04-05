@@ -30,9 +30,6 @@ cp -R "$ROOT/public"/. "$ROOT/dist/app/public/" 2>/dev/null || true
 mkdir -p "$ROOT/dist/app/prisma"
 cp "$ROOT/prisma/schema.prisma" "$ROOT/dist/app/prisma/"
 
-mkdir -p "$ROOT/dist/mysql-scripts"
-cp "$ROOT/scripts/mysql/"*.sql "$ROOT/dist/mysql-scripts/" 2>/dev/null || true
-
 cp "$ROOT/.env.example" "$ROOT/dist/.env.example"
 cp "$ROOT/scripts/HOSTINGER-DEPLOY.md" "$ROOT/dist/README-HOSTINGER.md"
 cp "$ROOT/scripts/standalone-start.sh" "$ROOT/dist/app/start.sh"

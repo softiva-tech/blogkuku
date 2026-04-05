@@ -20,7 +20,10 @@ export function sanitizeAuthPublicUrlEnv(): void {
       continue;
     }
     // Common mistake: DB connection string in the site-URL variable
-    if (/^mysql(2)?:\/\//i.test(trimmed)) {
+    if (
+      /^mysql(2)?:\/\//i.test(trimmed) ||
+      /^postgres(ql)?:\/\//i.test(trimmed)
+    ) {
       console.error(
         `[auth] ${key} looks like a database URL. Remove it or set a full site URL (https://yourdomain.com).`,
       );

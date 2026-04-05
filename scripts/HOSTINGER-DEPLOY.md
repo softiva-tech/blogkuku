@@ -1,6 +1,8 @@
 # Deploy Never Quit Punjabi (Next.js) on Hostinger
 
-This site is a **Node.js** application, not static PHP/HTML. You need **Hostinger VPS**, **Hostinger Node.js hosting**, or another host that runs **Node 20+** and **MySQL/MariaDB**.
+This site is a **Node.js** application, not static PHP/HTML. You need **Hostinger VPS**, **Hostinger Node.js hosting**, or another host that runs **Node 20+**.
+
+The database is **Supabase (PostgreSQL)**. Create a project at [supabase.com](https://supabase.com), then copy the **connection URI** from **Project Settings → Database**.
 
 ## What you uploaded
 
@@ -13,15 +15,19 @@ This site is a **Node.js** application, not static PHP/HTML. You need **Hostinge
 
 2. **Environment**  
    In the same directory as `server.js`, create `.env` (see `.env.example` in `dist/`):
-   - `DATABASE_URL` — **Use the MySQL user from Hostinger’s control panel**, not `root` from your local XAMPP. In **hPanel → Databases → MySQL Databases**, create a database and user; the panel shows host (often `localhost` or a hostname like `mysql.hostinger.com`), database name, username, and password. Example:
-     `mysql://PANEL_USER:PANEL_PASSWORD@127.0.0.1:3306/PANEL_DB_NAME`  
-     Special characters in the password must be **URL-encoded** (e.g. `@` → `%40`). Wrong user/password is the most common deploy/build failure.
-   - **Build / CI:** Set this same `DATABASE_URL` in the host’s “Environment variables” for the **build** step if the platform runs `next build` there. If the DB is only available at runtime, you still must use valid credentials whenever Prisma runs during build, or the build may fail connecting as `root`.
-   - `AUTH_SECRET` — long random string (`openssl rand -base64 32`). Must be available to **both** the Node process and **Edge middleware** (set it in the host’s environment / panel, not only in a file the server never reads).
-   - `NEXTAUTH_URL` — your public site URL, e.g. `https://yourdomain.com` (no trailing slash).
+   - `DATABASE_URL` — **Supabase PostgreSQL URI** (`postgresql://…` or `postgres://…`). Must **not** be a MySQL URL. Optional alias: `SUPABASE_DATABASE_URL` with the same value.
+   - **Build / CI:** Set `DATABASE_URL` for the **build** step if the host runs `next build` (Prisma needs it for `prisma generate` / static analysis).
+   - `AUTH_SECRET` — long random string (`openssl rand -base64 32`). Must be available to **both** the Node process and **Edge middleware** (set in the host’s environment / panel).
+   - `NEXTAUTH_URL` — site **origin only**, e.g. `https://yourdomain.com` (no path; see Auth.js docs).
 
 3. **Database**  
-   Create an empty MySQL database. In phpMyAdmin, run the SQL files in **`mysql-scripts/`** in order (`01`, `02`, …) **or** use a local machine with Prisma: `npx prisma db push` pointed at the same `DATABASE_URL` (if `db push` works on your setup).
+   On your machine (or CI with network to Supabase), apply the schema once:
+
+   ```bash
+   npx prisma db push
+   ```
+
+   See `scripts/SUPABASE.md` for details.
 
 4. **Start the app**  
    From the folder that contains `server.js`:
@@ -64,7 +70,7 @@ Usually the proxy cannot reach the Node process, or Node exited.
 
 ## After schema changes
 
-If you change `prisma/schema.prisma`, rebuild on your computer with `npm run build:dist` and re-upload `dist/app`, or run `npx prisma db push` / apply `mysql-scripts` on the server DB.
+If you change `prisma/schema.prisma`, run `npx prisma db push` against Supabase, then rebuild with `npm run build:dist` and re-upload `dist/app`.
 
 ## Not supported on plain “shared hosting” without Node
 
