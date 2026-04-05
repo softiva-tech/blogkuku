@@ -10,10 +10,12 @@
    npx prisma db push
    ```
 
-5. (Optional) Seed a default admin:
+5. Seed demo data and admin (uses `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`; defaults are `admin@demo.com` / `admin123`):
 
    ```bash
-   npm run db:seed
+   npm run db:setup
    ```
+
+   Or only seed after schema exists: `npm run db:seed`.
 
 Schema changes are managed with Prisma (`db push` or `prisma migrate`); the old MySQL `.sql` scripts were removed.

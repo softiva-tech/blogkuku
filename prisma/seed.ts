@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { PrismaClient, Role, PostApprovalStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { SITE_NAME } from "../src/lib/site";
@@ -5,8 +6,8 @@ import { SITE_NAME } from "../src/lib/site";
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@example.com";
-  const adminPassword = process.env.ADMIN_PASSWORD ?? "changeme123";
+  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@demo.com";
+  const adminPassword = process.env.ADMIN_PASSWORD ?? "admin123";
 
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
