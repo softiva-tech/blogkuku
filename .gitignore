@@ -1,0 +1,10 @@
+.DS_Store
+.cursor/
+*.zip
+
+# Build output (run ./build-dist.sh to regenerate)
+/dist/
+
+# Uploaded post images (keep directory + .htaccess)
+/uploads/posts/*
+!/uploads/posts/.htaccess

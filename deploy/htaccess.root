@@ -1,0 +1,18 @@
+# Kukuweb — Apache (Hostinger). If the site lives in a subfolder, set RewriteBase (see comment below).
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # If installed at https://yoursite.com/blog/ uncomment and fix path:
+  # RewriteBase /blog/
+  RewriteBase /
+</IfModule>
+
+# No directory listing
+Options -Indexes +FollowSymLinks
+
+# Block hidden files at web root (defense in depth)
+<IfModule mod_authz_core.c>
+  <FilesMatch "^\.">
+    Require all denied
+  </FilesMatch>
+</IfModule>
