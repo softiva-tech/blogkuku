@@ -32,3 +32,21 @@ Hostinger deployment — Kukuweb / Never Quit Punjabi
    - Hostinger mail or SMTP: adjust includes/mail.php if you use SMTP instead of PHP mail().
 
 ZIP for upload: zip the contents of dist/ (not the dist folder name itself) if your file manager prefers a single archive.
+
+9) 403 FORBIDDEN (after upload / Git deploy)
+   A) Quick test — .htaccess
+      - In File Manager, rename public_html/.htaccess to .htaccess.bak
+      - Open your site again. If it works, the old rules were the problem; keep .htaccess
+        as comments-only (see repo root .htaccess) or leave it deleted.
+   B) Document root
+      - index.php must be directly in public_html (Linux names are case-sensitive: index.php not Index.php).
+   C) Permissions
+      - Directories 755, files 644 (avoid 777 on files).
+   D) PHP
+      - hPanel → Advanced → PHP Configuration → PHP 8.1 or newer.
+   E) Security / firewall
+      - hPanel → Security → disable ModSecurity / Imunify360 for 10 minutes to test; if 403
+        disappears, ask Hostinger support to whitelist your app or adjust rules.
+   F) Subfolder install
+      - If the site is NOT at domain root, only then add RewriteBase in .htaccess (ask support
+        for the correct path).
